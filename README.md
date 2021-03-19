@@ -1,9 +1,19 @@
-# binance-trade-bot
+# binance-trade-bot UNOFFICIAL
 
 ![github](https://img.shields.io/github/workflow/status/edeng23/binance-trade-bot/binance-trade-bot)
 ![docker](https://img.shields.io/docker/pulls/edeng23/binance-trade-bot)
 
 > Automated cryptocurrency trading bot
+
+
+
+# IMPORTANT!!! This version is old. But since some of you asked, I have released what I am using.
+
+
+
+# For official - https://github.com/edeng23/binance-trade-bot 
+
+
 
 ## Why?
 
