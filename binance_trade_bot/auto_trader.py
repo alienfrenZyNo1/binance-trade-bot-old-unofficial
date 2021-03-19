@@ -8,7 +8,7 @@ from .binance_api_manager import BinanceAPIManager
 from .config import Config
 from .database import Database
 from .logger import Logger
-from .models import Pair, Coin, CoinValue
+from .models import Pair, Coin, CoinValue, ScoutHistory
 from .utils import get_market_ticker_price_from_list
 
 
@@ -122,7 +122,8 @@ class AutoTrader:
             return
 
         ratio_dict: Dict[Pair, float] = {}
-
+        
+        scout_stack = []
         for pair in self.db.get_pairs_from(current_coin):
             if not pair.to_coin.enabled:
                 continue
@@ -132,13 +133,19 @@ class AutoTrader:
                 self.logger.info("Skipping scouting... optional coin {0} not found".format(pair.to_coin + self.config.BRIDGE))
                 continue
 
-            self.db.log_scout(pair, pair.ratio, current_coin_price, optional_coin_price)
+            scout_stack.append(ScoutHistory(pair, pair.ratio, current_coin_price, optional_coin_price))
 
             # Obtain (current coin)/(optional coin)
             coin_opt_coin_ratio = current_coin_price / optional_coin_price
 
             # save ratio so we can pick the best option, not necessarily the first
             ratio_dict[pair] = (coin_opt_coin_ratio - self.config.SCOUT_TRANSACTION_FEE * self.config.SCOUT_MULTIPLIER * coin_opt_coin_ratio) - pair.ratio
+
+
+        if scout_stack:
+            self.db.log_scout_stack(scout_stack)
+            scout_stack.clear()
+
 
         # keep only ratios bigger than zero
         ratio_dict = {k: v for k, v in ratio_dict.items() if v > 0}
@@ -165,7 +172,7 @@ class AutoTrader:
                 balance = self.manager.get_currency_balance(coin.symbol)
                 if balance == 0:
                     continue
-                usd_value = get_market_ticker_price_from_list(all_ticker_values, coin + "USDT")
+                usd_value = get_market_ticker_price_from_list(all_ticker_values, coin + "BUSD")
                 btc_value = get_market_ticker_price_from_list(all_ticker_values, coin + "BTC")
                 cv = CoinValue(coin, balance, usd_value, btc_value, datetime=now)
                 session.add(cv)
